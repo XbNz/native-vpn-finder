@@ -13,7 +13,11 @@ class NativeAppServiceProvider implements ProvidesPhpIni
      */
     public function boot(): void
     {
-        Window::open();
+        Window::open()
+            ->rememberState()
+            ->url(route('vpns.index'))
+            ->title('VPN servers')
+            ->backgroundColor('#000000');
     }
 
     /**
