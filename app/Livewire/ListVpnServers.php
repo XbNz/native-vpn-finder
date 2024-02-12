@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Actions\RefreshVpnServersAction;
 use App\Models\VpnServer;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -32,10 +33,7 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
     {
         return Action::make('refreshServers')
             ->label('Refresh Servers')
-            ->action(function () {
-//                Artisan::call('db:seed');
-//                dd('test');
-            });
+            ->action(app(RefreshVpnServersAction::class)->handle());
     }
 
 
