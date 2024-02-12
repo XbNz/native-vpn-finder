@@ -9,11 +9,10 @@ return new class extends Migration {
     {
         Schema::create('vpn_servers', function (Blueprint $table) {
             $table->id();
-            $table->text('ip_address');
-            $table->string('domain')->nullable();
             $table->foreignId('vpn_provider_id')->references('id')->on('vpn_providers');
             $table->foreignId('country_id')->references('id')->on('countries');
             $table->foreignId('city_id')->nullable()->references('id')->on('cities');
+            $table->string('protocol')->nullable();
             $table->timestamps();
         });
     }
