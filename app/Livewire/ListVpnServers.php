@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Actions\RefreshVpnServersAction;
+use App\Enums\DownloadType;
+use App\Events\ServerInfoDownloadEvent;
 use App\Models\ServerNetworkDetail;
 use App\Models\VpnServer;
 use Filament\Actions\Action;
@@ -12,10 +14,14 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Support\Contracts\TranslatableContentDriver;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 
@@ -32,9 +38,9 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
 
     public function refreshServersAction(): Action
     {
-        return Action::make('refreshServers')
-            ->label('Refresh Servers')
-            ->action(app(RefreshVpnServersAction::class)->handle());
+//        return Action::make('refreshServers')
+//            ->label('Refresh Servers')
+//            ->action(app(RefreshVpnServersAction::class)->handle());
     }
 
 
@@ -68,16 +74,24 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
                     ->searchable()
                     ->sortable(),
             ])
-            ->filters([
-                // ...
-            ])
             ->actions([
-                // ...
             ])
             ->bulkActions([
-
+                BulkAction::make('copy_as_json')
+                    ->label('Copy as JSON')
+                    ->action(function (Collection $records) {
+                        app(Dispatcher::class)->dispatch(
+                            new ServerInfoDownloadEvent($records, DownloadType::Clipboard)
+                        );
+                    }),
+                BulkAction::make('save_as_json')
+                    ->label('Save as JSON')
+                    ->action(function (Collection $records) {
+                        app(Dispatcher::class)->dispatch(
+                            new ServerInfoDownloadEvent($records, DownloadType::FileManager)
+                        );
+                    }),
             ]);
     }
-
 
 }

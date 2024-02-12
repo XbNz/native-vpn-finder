@@ -1,5 +1,5 @@
 <div>
-    {{ $this->refreshServersAction() }}
+{{--    {{ $this->refreshServersAction() }}--}}
 
     {{ $this->table }}
 </div>
