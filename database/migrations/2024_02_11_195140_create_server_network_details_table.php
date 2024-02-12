@@ -9,9 +9,9 @@ return new class extends Migration {
     {
         Schema::create('server_network_details', function (Blueprint $table) {
             $table->id();
-            $table->text('ip_address');
-            $table->string('hostname')->nullable();
-            $table->foreignId('vpn_server_id')->references('id')->on('vpn_servers');
+            $table->text('ip_address')->index();
+            $table->string('hostname')->index()->nullable();
+            $table->foreignId('vpn_server_id')->index()->references('id')->on('vpn_servers');
             $table->timestamps();
         });
     }

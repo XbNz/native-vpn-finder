@@ -3,11 +3,15 @@
 namespace App\Actions;
 
 use App\Enums\Protocol;
+use App\Models\City;
+use App\Models\Country;
+use App\Models\ServerNetworkDetail;
 use App\Models\VpnProvider;
 use App\Models\VpnServer;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 use Psl\Type;
@@ -24,10 +28,8 @@ class RefreshVpnServersAction
         $this->database->beginTransaction();
 
         try {
-            $this->database->table('vpn_providers')->truncate();
-            $this->database->table('vpn_servers')->truncate();
-            $this->database->table('countries')->truncate();
-            $this->database->table('cities')->truncate();
+            ServerNetworkDetail::query()->truncate();
+            VpnServer::query()->truncate();
 
             $serversRaw = Http::get('https://raw.githubusercontent.com/qdm12/gluetun/master/internal/storage/servers.json')
                 ->throw()
@@ -63,22 +65,26 @@ class RefreshVpnServersAction
                 ]))
             )->coerce($serversWithCountryAndLegitIps);
 
-            Collection::make($servers)
-                ->each(function (array $providerServers, string $providerName) {
-                    Collection::make($providerServers)
-                        ->each(function (array $providerServers, string $providerName) use ($provider) {
-                            Collection::make($providerServers)
-                                ->each(function (array $server) {
-                                    VpnServer::query()->create([
-                                        ''
-                                    ])
-                                });
-                        });
-
             foreach ($servers as $providerName => $providerServers) {
-                $provider = VpnProvider::query()->create(['name' => $providerName]);
-
-
+                foreach ($providerServers as $server) {
+                    foreach ($server['ips'] as $ip) {
+                        ServerNetworkDetail::query()->create([
+                            'ip_address' => $ip,
+                            'hostname' => $server['hostname'] ?? null,
+                            'vpn_server_id' => VpnServer::query()->create([
+                                'vpn_provider_id' => VpnProvider::query()->firstOrCreate(['name' => $providerName])->id,
+                                'country_id' => Country::query()->firstOrCreate(['name' => $server['country']])->id,
+                                'city_id' => array_key_exists('city', $server)
+                                    ? City::query()->firstOrCreate([
+                                        'name' => $server['city'],
+                                        'country_id' => Country::query()->where('name', $server['country'])->value('id'),
+                                    ])->id
+                                    : null,
+                                'protocol' => $server['vpn'] ?? null,
+                            ])->id,
+                        ]);
+                    }
+                }
             }
 
             $this->database->commit();

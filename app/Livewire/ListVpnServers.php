@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Actions\RefreshVpnServersAction;
+use App\Models\ServerNetworkDetail;
 use App\Models\VpnServer;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -40,15 +41,30 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
     public function table(Table $table): Table
     {
         return $table
-            ->query(VpnServer::query())
+            ->query(ServerNetworkDetail::query())
             ->columns([
                 TextColumn::make('ip_address')
                     ->label('IP Address')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('domain'),
-                TextColumn::make('vpnProvider.name')
+                TextColumn::make('hostname')
+                    ->label('Host name')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('vpnServer.vpnProvider.name')
                     ->label('Provider')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('vpnServer.country.name')
+                    ->label('Country')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('vpnServer.city.name')
+                    ->label('City')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('vpnServer.protocol')
+                    ->label('Protocol')
                     ->searchable()
                     ->sortable(),
             ])
