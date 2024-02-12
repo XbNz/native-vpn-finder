@@ -18,11 +18,13 @@ use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Artisan;
+use JJG\Ping;
 use Livewire\Component;
 
 class ListVpnServers extends Component implements HasTable, HasForms, HasActions
@@ -35,14 +37,6 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
     {
         return view('livewire.list-vpn-servers');
     }
-
-    public function refreshServersAction(): Action
-    {
-//        return Action::make('refreshServers')
-//            ->label('Refresh Servers')
-//            ->action(app(RefreshVpnServersAction::class)->handle());
-    }
-
 
     public function table(Table $table): Table
     {
@@ -73,8 +67,14 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
                     ->label('Protocol')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('round_trip_time')
+                    ->label('RTT')
+                    ->sortable(),
             ])
-            ->actions([
+            ->headerActions([
+                \Filament\Tables\Actions\Action::make('refreshServers')
+                    ->label('Refresh Servers')
+                    ->action(fn() => app(RefreshVpnServersAction::class)->handle())
             ])
             ->bulkActions([
                 BulkAction::make('copy_as_json')
@@ -91,7 +91,51 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
                             new ServerInfoDownloadEvent($records, DownloadType::FileManager)
                         );
                     }),
+//                BulkAction::make('ping_bulk')
+//                    ->label('Ping selected')
+//                    ->action(function (Collection $records) {
+//                        $records->each(function (ServerNetworkDetail $record) {
+//                            $pingResult = (new Ping($record->ip_address, timeout: 1))->ping();
+//
+//                            if ($pingResult === false) {
+//                                return;
+//                            }
+//
+//                            $record->update([
+//                                'round_trip_time' => $pingResult,
+//                            ]);
+//                        });
+//                    }),
+            ])
+            ->actions([
+                \Filament\Tables\Actions\Action::make('ping')
+                    ->label('Ping')
+                    ->action(function (ServerNetworkDetail $record) {
+                        $pingResult = (new Ping($record->ip_address, timeout: 1))->ping();
+
+                        if ($pingResult === false) {
+                            return;
+                        }
+
+                        $record->update([
+                            'round_trip_time' => $pingResult,
+                        ]);
+                    })
+                    ->button()
             ]);
     }
+
+//    protected function getTableFilters(): array
+//    {
+//        return [
+//            SelectFilter::make('vpnServer.country.name')
+//                ->multiple()
+//                ->label('Country'),
+//            SelectFilter::make('vpnServer.city.name')
+//                ->multiple()
+//                ->label('City'),
+//        ];
+//    }
+
 
 }

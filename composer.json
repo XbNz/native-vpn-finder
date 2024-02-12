@@ -11,6 +11,7 @@
         "php": "^8.1",
         "azjezz/psl": "^2.9",
         "filament/tables": "^3.2",
+        "geerlingguy/ping": "*",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",

@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->text('ip_address')->index();
             $table->string('hostname')->index()->nullable();
+            $table->float('round_trip_time', 6, 2)->nullable();
             $table->foreignId('vpn_server_id')->index()->references('id')->on('vpn_servers');
             $table->timestamps();
         });

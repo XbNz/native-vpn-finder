@@ -16,8 +16,7 @@ class NativeAppServiceProvider implements ProvidesPhpIni
         Window::open()
             ->rememberState()
             ->url(route('vpns.index'))
-            ->title('VPN servers')
-            ->backgroundColor('#000000');
+            ->title('VPN servers');
     }
 
     /**

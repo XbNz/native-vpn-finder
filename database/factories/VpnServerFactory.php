@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\Protocol;
 use App\Models\City;
 use App\Models\Country;
+use App\Models\Region;
 use App\Models\VpnProvider;
 use App\Models\VpnServer;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,6 +22,7 @@ class VpnServerFactory extends Factory
             'vpn_provider_id' => VpnProvider::factory(),
             'country_id' => Country::factory(),
             'city_id' => City::factory(),
+            'region_id' => Region::factory(),
             'protocol' => $this->faker->randomElement(Arr::pluck(Protocol::cases(), 'value')),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),

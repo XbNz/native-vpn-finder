@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->string('protocol')->nullable();
             $table->foreignId('vpn_provider_id')->index()->references('id')->on('vpn_providers');
             $table->foreignId('country_id')->index()->references('id')->on('countries');
+            $table->foreignId('region_id')->index()->nullable()->references('id')->on('regions');
             $table->foreignId('city_id')->index()->nullable()->references('id')->on('cities');
             $table->timestamps();
         });

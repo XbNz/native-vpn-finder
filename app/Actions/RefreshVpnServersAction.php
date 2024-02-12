@@ -5,9 +5,11 @@ namespace App\Actions;
 use App\Enums\Protocol;
 use App\Models\City;
 use App\Models\Country;
+use App\Models\Region;
 use App\Models\ServerNetworkDetail;
 use App\Models\VpnProvider;
 use App\Models\VpnServer;
+use Filament\Notifications\Notification;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -73,7 +75,17 @@ class RefreshVpnServersAction
                             'hostname' => $server['hostname'] ?? null,
                             'vpn_server_id' => VpnServer::query()->create([
                                 'vpn_provider_id' => VpnProvider::query()->firstOrCreate(['name' => $providerName])->id,
-                                'country_id' => Country::query()->firstOrCreate(['name' => $server['country']])->id,
+                                'region_id' => array_key_exists('region', $server)
+                                    ? Region::query()->firstOrCreate([
+                                        'name' => $server['region'],
+                                    ])->id
+                                    : null,
+                                'country_id' => Country::query()->firstOrCreate([
+                                    'name' => $server['country'],
+                                    'region_id' => array_key_exists('region', $server)
+                                        ? Region::query()->where('name', $server['region'])->value('id')
+                                        : null,
+                                ])->id,
                                 'city_id' => array_key_exists('city', $server)
                                     ? City::query()->firstOrCreate([
                                         'name' => $server['city'],
