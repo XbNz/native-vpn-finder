@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('regions', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->index();
+            $table->string('name')->index()->unique();
             $table->timestamps();
         });
     }

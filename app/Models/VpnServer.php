@@ -31,6 +31,11 @@ class VpnServer extends Model
         return $this->belongsTo(Country::class);
     }
 
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
+    }
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);

@@ -14,6 +14,7 @@ class ServerNetworkDetailFactory extends Factory
     {
         return [
             'ip_address' => $this->faker->ipv4(),
+            'ip_version' => 4,
             'hostname' => $this->faker->domainName(),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),

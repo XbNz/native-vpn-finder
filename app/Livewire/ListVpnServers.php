@@ -47,6 +47,9 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
                     ->label('IP Address')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('ip_version')
+                    ->label('IP version')
+                    ->sortable(),
                 TextColumn::make('hostname')
                     ->label('Host name')
                     ->searchable()
@@ -57,6 +60,10 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
                     ->sortable(),
                 TextColumn::make('vpnServer.country.name')
                     ->label('Country')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('vpnServer.region.name')
+                    ->label('Region')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('vpnServer.city.name')
@@ -91,21 +98,21 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
                             new ServerInfoDownloadEvent($records, DownloadType::FileManager)
                         );
                     }),
-//                BulkAction::make('ping_bulk')
-//                    ->label('Ping selected')
-//                    ->action(function (Collection $records) {
-//                        $records->each(function (ServerNetworkDetail $record) {
-//                            $pingResult = (new Ping($record->ip_address, timeout: 1))->ping();
-//
-//                            if ($pingResult === false) {
-//                                return;
-//                            }
-//
-//                            $record->update([
-//                                'round_trip_time' => $pingResult,
-//                            ]);
-//                        });
-//                    }),
+                BulkAction::make('ping_bulk')
+                    ->label('Ping selected')
+                    ->action(function (Collection $records) {
+                        $records->each(function (ServerNetworkDetail $record) {
+                            $pingResult = (new Ping($record->ip_address, timeout: 1))->ping();
+
+                            if ($pingResult === false) {
+                                return;
+                            }
+
+                            $record->update([
+                                'round_trip_time' => $pingResult,
+                            ]);
+                        });
+                    }),
             ])
             ->actions([
                 \Filament\Tables\Actions\Action::make('ping')
@@ -125,17 +132,17 @@ class ListVpnServers extends Component implements HasTable, HasForms, HasActions
             ]);
     }
 
-//    protected function getTableFilters(): array
-//    {
-//        return [
-//            SelectFilter::make('vpnServer.country.name')
-//                ->multiple()
-//                ->label('Country'),
-//            SelectFilter::make('vpnServer.city.name')
-//                ->multiple()
-//                ->label('City'),
-//        ];
-//    }
+    protected function getTableFilters(): array
+    {
+        return [
+            SelectFilter::make('vpnServer.country.name')
+                ->multiple()
+                ->label('Country'),
+            SelectFilter::make('vpnServer.city.name')
+                ->multiple()
+                ->label('City'),
+        ];
+    }
 
 
 }

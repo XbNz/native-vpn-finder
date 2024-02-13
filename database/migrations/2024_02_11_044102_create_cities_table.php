@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('cities', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->index();
+            $table->string('name')->index()->unique();
             $table->foreignId('country_id')->nullable()->index()->references('id')->on('countries');
             $table->timestamps();
         });
