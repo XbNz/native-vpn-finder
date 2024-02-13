@@ -20,6 +20,10 @@ class VpnServerFactory extends Factory
     {
         return [
             'vpn_provider_id' => VpnProvider::factory(),
+            'ip_address' => $this->faker->ipv4(),
+            'ip_version' => 4,
+            'hostname' => $this->faker->domainName(),
+            'round_trip_time' => $this->faker->randomFloat(2, 0, 100),
             'country_id' => Country::factory(),
             'city_id' => City::factory(),
             'region_id' => Region::factory(),

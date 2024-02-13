@@ -7,7 +7,6 @@ use App\Enums\Protocol;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Region;
-use App\Models\ServerNetworkDetail;
 use App\Models\VpnProvider;
 use App\Models\VpnServer;
 use Filament\Notifications\Notification;
@@ -30,7 +29,6 @@ class RefreshVpnServersAction
 
     public function handle(): void
     {
-        ServerNetworkDetail::query()->truncate();
         VpnServer::query()->truncate();
         VpnProvider::query()->truncate();
         Region::query()->truncate();
@@ -77,39 +75,6 @@ class RefreshVpnServersAction
             ->each($this->createCities(...))
             ->each($this->createProviders(...))
             ->each($this->createVpnServers(...));
-
-//            foreach ($servers as $providerName => $providerServers) {
-//                foreach ($providerServers as $server) {
-//                    foreach ($server['ips'] as $ip) {
-//                        ServerNetworkDetail::query()->create([
-//                            'ip_address' => $ip,
-//                            'hostname' => $server['hostname'] ?? null,
-//                            'vpn_server_id' => VpnServer::query()->create([
-//                                'vpn_provider_id' => VpnProvider::query()->firstOrCreate(['name' => $providerName])->id,
-//                                'region_id' => array_key_exists('region', $server)
-//                                    ? Region::query()->firstOrCreate([
-//                                        'name' => $server['region'],
-//                                    ])->id
-//                                    : null,
-//                                'country_id' => Country::query()->firstOrCreate([
-//                                    'name' => $server['country'],
-//                                    'region_id' => array_key_exists('region', $server)
-//                                        ? Region::query()->where('name', $server['region'])->value('id')
-//                                        : null,
-//                                ])->id,
-//                                'city_id' => array_key_exists('city', $server)
-//                                    ? City::query()->firstOrCreate([
-//                                        'name' => $server['city'],
-//                                        'country_id' => Country::query()->where('name', $server['country'])->value('id'),
-//                                    ])->id
-//                                    : null,
-//                                'protocol' => $server['vpn'] ?? null,
-//                            ])->id,
-//                        ]);
-//                    }
-//                }
-//            }
-
     }
 
     private function createRegions(array $servers, string $providerName): void
@@ -149,37 +114,56 @@ class RefreshVpnServersAction
         $this->database->table('vpn_providers')->insertOrIgnore(['name' => $providerName]);
     }
 
-    private function createVpnServers(array $servers, string $providerName): void
+    private function flattenIpAddresses(array $server, string $providerName): array
     {
-        Collection::make($servers)
-            ->map(function (array $server) use ($providerName) {
+        return Collection::make($server['ips'])
+            ->map(function (string $ip) use ($server, $providerName) {
                 return new VpnServerDTO(
-                    $server['vpn'] ?? null,
+                    $ip,
+                    filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : 4,
                     VpnProvider::query()->where('name', $providerName)->get()->sole(),
                     Country::query()->where('name', $server['country'])->get()->sole(),
+                    $server['hostname'] ?? null,
                     array_key_exists('region', $server)
                         ? Region::query()->where('name', $server['region'])->get()->sole()
                         : null,
                     array_key_exists('city', $server)
                         ? City::query()->where('name', $server['city'])->get()->sole()
                         : null,
-                    Collection::make($server['ips'])->map(fn (string $ip) => ServerNetworkDetail::query()->make([
-                        'ip_address' => $ip,
-                        'ip_version' => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : 4,
-                        'hostname' => $server['hostname'] ?? null,
-                    ])
-                ));
+                    $server['vpn'] ?? null
+                );
             })
-            ->each(function (VpnServerDTO $vpnServerDTO) {
-                $vpnServer = VpnServer::query()->create([
-                    'protocol' => $vpnServerDTO->protocol,
-                    'vpn_provider_id' => $vpnServerDTO->vpnProvider->id,
-                    'country_id' => $vpnServerDTO->country->id,
-                    'region_id' => $vpnServerDTO->region?->id,
-                    'city_id' => $vpnServerDTO->city?->id,
-                ]);
+            ->toArray();
+    }
 
-                $vpnServer->serverNetworkDetails()->saveMany($vpnServerDTO->serverNetworkDetails);
+    private function createVpnServers(array $servers, string $providerName): void
+    {
+        LazyCollection::make($servers)
+            ->map(fn(array $server) => $this->flattenIpAddresses($server, $providerName))
+            ->flatten(1)
+            ->tap($this->createVpnServersFromDTOs(...));
+    }
+
+    private function createVpnServersFromDTOs(LazyCollection $vpnServerDtos): void
+    {
+        $insertReadyVpnServers = $vpnServerDtos
+            ->map(function (VpnServerDTO $serverDto) {
+                return [
+                    'ip_address' => $serverDto->ipAddress,
+                    'ip_version' => $serverDto->ipVersion,
+                    'hostname' => $serverDto->hostname,
+                    'protocol' => $serverDto->protocol?->value,
+                    'vpn_provider_id' => $serverDto->vpnProvider->id,
+                    'country_id' => $serverDto->country->id,
+                    'region_id' => $serverDto->region?->id,
+                    'city_id' => $serverDto->city?->id,
+                ];
+            });
+
+        $insertReadyVpnServers->chunk(1000)
+            ->each(function (LazyCollection $chunk) {
+                VpnServer::query()->insert($chunk->toArray());
             });
     }
+
 }

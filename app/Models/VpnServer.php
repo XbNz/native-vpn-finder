@@ -21,11 +21,6 @@ class VpnServer extends Model
         return $this->belongsTo(VpnProvider::class);
     }
 
-    public function serverNetworkDetails(): HasMany
-    {
-        return $this->hasMany(ServerNetworkDetail::class);
-    }
-
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);

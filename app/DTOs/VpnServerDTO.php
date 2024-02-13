@@ -18,15 +18,16 @@ class VpnServerDTO
      * @param Country $country
      * @param Region|null $region
      * @param City|null $city
-     * @param Collection<ServerNetworkDetail> $serverNetworkDetails
      */
     public function __construct(
-        public readonly ?Protocol $protocol,
+        public readonly string $ipAddress,
+        public readonly int $ipVersion,
         public readonly VpnProvider $vpnProvider,
         public readonly Country $country,
+        public readonly ?string $hostname,
         public readonly ?Region $region,
         public readonly ?City $city,
-        public readonly Collection $serverNetworkDetails,
+        public readonly ?Protocol $protocol,
     ) {
     }
 }

@@ -14,7 +14,7 @@ class CountryFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->country(),
+            'name' => $this->faker->unique()->country(),
             'region_id' => Region::factory(),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
